@@ -29,18 +29,20 @@ int main (void)
   string a;
   cin >> a;
   cout << "o nome que inseriu é: " << a << endl;
+  //General stuff about the graph - title && axis, etc
   string titulograf ="LiF - 2^{a} ordem K_{#beta}";
   string xtitulo = "#theta(^{o})";
   string ytitulo = "R(s^{-1})";
-
-  // TF1 *fitfunction = new TF1("fitting function", "[b]+[a]*x");
 
 
   int n=0;
   vector<double*> FileShit = ReadFileGeneral("Text/"+a+".txt",n);
   TGraphErrors *results = SetGraphStuff(n,FileShit[0],FileShit[1],NULL,FileShit[3],titulograf,xtitulo ,ytitulo );
+
+  // TF1 *fitfunction = new TF1("fitting function", "[b]+[a]*x");
   // results->Fit("fitting function", "V");
   // cout << "chi square/ndf = " << fitfunction->GetChisquare()/fitfunction->GetNDF() << endl;
+
   DrawEverything(results,a);
 
 }
@@ -59,9 +61,6 @@ void DrawEverything(TGraphErrors* graph,string name)
   delete c1;
 }
 
-
-
-
 TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string title,string xtitle,string ytitle)
 {
   TGraphErrors *results = new TGraphErrors(n,x,y,ex,ey);
@@ -74,7 +73,6 @@ TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string
   return results;
 
 }
-
 
 vector<double *> ReadFileGeneral(string a,int &n)
 {
