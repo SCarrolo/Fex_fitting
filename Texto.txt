@@ -1,0 +1,5 @@
+Draw
+ex
+ey
+Spline [12:35]
+Nome do ficheiro.Text
