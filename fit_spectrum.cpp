@@ -18,7 +18,7 @@
 #include "TF1.h"
 
 vector<double *> ReadFileGeneral(string,int&);
-TGraphErrors* SetGraphStuff(int, double*,double*,double*,double*,string,string,string);
+TGraphErrors* SetGraphStuff(int, double*,double*,double*,double*,string,string,string,double);
 void DrawEverything(TGraphErrors*,TGraphErrors*,TF1*, string);
 pair<double,double> GetExtremes(double*,int n);
 
@@ -38,10 +38,10 @@ int main (void)
 
   int n=0;
   vector<double*> FileShit = ReadFileGeneral("Text/"+a+".txt",n);
-  TGraphErrors *results = SetGraphStuff(n,FileShit[0],FileShit[1],NULL,FileShit[3],titulograf,xtitulo ,ytitulo );
+  TGraphErrors *results = SetGraphStuff(n,FileShit[0],FileShit[1],NULL,FileShit[3],titulograf,xtitulo ,ytitulo,0.04 );
 
   TF1 *fitfunction = new TF1("fitting function", "[b]+[a]*x");
-  results->Fit("fitting function", "V");
+  results->Fit("fitting function", "S");
   cout << "chi square/ndf = " << fitfunction->GetChisquare()/fitfunction->GetNDF() << endl;
 
   vector<double> sigma;
@@ -49,7 +49,7 @@ int main (void)
   {
     sigma.push_back(FileShit[1][i]-fitfunction->Eval(FileShit[0][i]));
   }
-  TGraphErrors *resultsSigma = SetGraphStuff(n,FileShit[0],sigma.data(),NULL,FileShit[3],"Residuos",xtitulo ,"Exp-Teo" );
+  TGraphErrors *resultsSigma = SetGraphStuff(n,FileShit[0],sigma.data(),NULL,FileShit[3],"",xtitulo ,"#delta(s^{-1})",0.08);
   pair<double, double> extremes = GetExtremes(FileShit[0],n);
   TF1 *fNull = new TF1("null func", "0",extremes.first,extremes.second);
   fNull->SetLineColor(kBlack);
@@ -122,13 +122,13 @@ void DrawEverything(TGraphErrors* graph,TGraphErrors* graph2,TF1*func,string nam
 
   c1->SaveAs(("imagens/"+name + ".png").c_str());
   c1->Update();
-  gPad->WaitPrimitive();
+  gPad->WaitPrimitive("ggg");
   delete c1;
 }
 
 
 
-TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string title,string xtitle,string ytitle)
+TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string title,string xtitle,string ytitle,double tSize)
 {
   TGraphErrors *results = new TGraphErrors(n,x,y,ex,ey);
   results->SetMarkerStyle(6);
@@ -136,7 +136,17 @@ TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string
   results->SetMarkerColor(kRed+2);
   results->SetTitle(title.c_str());
   results->GetXaxis()->SetTitle(xtitle.c_str());
+  results->GetXaxis()->SetTitleSize(tSize);
   results->GetYaxis()->SetTitle(ytitle.c_str());
+  results->GetYaxis()->SetTitleSize(tSize);
+  if(tSize > 0.04)
+  {
+    results->GetYaxis()->SetTitleOffset(0.5);
+    results->GetXaxis()->SetTitleOffset(0.5);
+  }
+
+  gStyle->SetLabelSize(0.08,"X");
+  gStyle->SetLabelSize(0.08,"Y");
   return results;
 
 }
