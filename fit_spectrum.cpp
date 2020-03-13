@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <utility>
 //my classes includes
 #include "FCtools.h"
 #include "Vec.h"
@@ -18,16 +19,16 @@
 
 vector<double *> ReadFileGeneral(string,int&);
 TGraphErrors* SetGraphStuff(int, double*,double*,double*,double*,string,string,string);
-void DrawEverything(TGraphErrors*, string);
-
+void DrawEverything(TGraphErrors*,TGraphErrors*,TF1*, string);
+pair<double,double> GetExtremes(double*,int n);
 
 using namespace std;
 
 int main (void)
 {
   cout << "Nome do ficheiro:" << endl;
-  string a;
-  cin >> a;
+  string a = "20-LiF-1";
+  // cin >> a;
   cout << "o nome que inseriu é: " << a << endl;
   //General stuff about the graph - title && axis, etc
   string titulograf ="LiF - 2^{a} ordem K_{#beta}";
@@ -39,27 +40,93 @@ int main (void)
   vector<double*> FileShit = ReadFileGeneral("Text/"+a+".txt",n);
   TGraphErrors *results = SetGraphStuff(n,FileShit[0],FileShit[1],NULL,FileShit[3],titulograf,xtitulo ,ytitulo );
 
-  // TF1 *fitfunction = new TF1("fitting function", "[b]+[a]*x");
-  // results->Fit("fitting function", "V");
-  // cout << "chi square/ndf = " << fitfunction->GetChisquare()/fitfunction->GetNDF() << endl;
+  TF1 *fitfunction = new TF1("fitting function", "[b]+[a]*x");
+  results->Fit("fitting function", "V");
+  cout << "chi square/ndf = " << fitfunction->GetChisquare()/fitfunction->GetNDF() << endl;
 
-  DrawEverything(results,a);
-
+  vector<double> sigma;
+  for(int i = 0; i < n;i++)
+  {
+    sigma.push_back(FileShit[1][i]-fitfunction->Eval(FileShit[0][i]));
+  }
+  TGraphErrors *resultsSigma = SetGraphStuff(n,FileShit[0],sigma.data(),NULL,FileShit[3],"Residuos",xtitulo ,"Exp-Teo" );
+  pair<double, double> extremes = GetExtremes(FileShit[0],n);
+  TF1 *fNull = new TF1("null func", "0",extremes.first,extremes.second);
+  fNull->SetLineColor(kBlack);
+  DrawEverything(results,resultsSigma,fNull,a);
 }
 
-void DrawEverything(TGraphErrors* graph,string name)
+pair<double,double> GetExtremes(double*v,int n)
+{
+  pair<double,double> pExt;
+  pExt.first = v[0]; //Minimum
+  pExt.second = v[0]; //maximum
+  for(int i = 0;i < n;i++)
+  {
+    if(v[i] <= pExt.second)
+    {
+      pExt.second = v[i];
+    }
+    if(v[i] >= pExt.first)
+    {
+      pExt.first = v[i];
+    }
+  }
+  return pExt;
+}
+
+//
+// void DrawEverything(TGraphErrors* graph,TGraphErrors* graph2,TF1*func,string name)
+// {
+//   TApplication * MyRootApp;
+//   MyRootApp = new TApplication("", NULL, NULL);
+//   MyRootApp->SetReturnFromRun(true);
+//   TCanvas *c1 = new TCanvas("c1","",1280,720);
+//
+//   c1->Divide(1,2);
+//   c1->cd(1);
+//   gPad->Clear();
+//   graph->Draw("AP");
+//
+//   c1->cd(2);
+//   c1->SetGrid(1,1);
+//   graph2->Draw("AP");
+//   func->Draw("SAME");
+//   c1->SaveAs(("imagens/"+name + ".png").c_str());
+//   c1->Update();
+//   gPad->WaitPrimitive();
+//   delete c1;
+// }
+
+void DrawEverything(TGraphErrors* graph,TGraphErrors* graph2,TF1*func,string name)
 {
   TApplication * MyRootApp;
   MyRootApp = new TApplication("", NULL, NULL);
   MyRootApp->SetReturnFromRun(true);
   TCanvas *c1 = new TCanvas("c1","",1280,720);
   gPad->Clear();
-  graph->Draw("APL");
+  TPad* P = new TPad("PadFit","",0,0.33,1,1);
+  TPad* PRes = new TPad("PadRes","",0,0,1,0.33);
+  P->SetBorderMode(0);
+  PRes->SetBorderMode(0);
+
+  c1->cd();
+  P->Draw();
+  PRes->Draw();
+  P->cd();
+  graph->Draw("AP");
+  PRes->cd();
+  graph2->Draw("AP");
+  func->Draw("SAME");
+
+
   c1->SaveAs(("imagens/"+name + ".png").c_str());
   c1->Update();
   gPad->WaitPrimitive();
   delete c1;
 }
+
+
 
 TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string title,string xtitle,string ytitle)
 {
