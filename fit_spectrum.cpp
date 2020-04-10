@@ -30,6 +30,7 @@ int main (void)
   string a = "20-LiF-1";
   // cin >> a;
   cout << "o nome que inseriu é: " << a << endl;
+  
   //General stuff about the graph - title && axis, etc
   string titulograf ="LiF - 2^{a} ordem K_{#beta}";
   string xtitulo = "#theta(^{o})";
@@ -39,16 +40,17 @@ int main (void)
   int n=0;
   vector<double*> FileShit = ReadFileGeneral("Text/"+a+".txt",n);
   TGraphErrors *results = SetGraphStuff(n,FileShit[0],FileShit[1],NULL,FileShit[3],titulograf,xtitulo ,ytitulo,0.04 );
-
+  //DEFINIÇÃO DA FUNÇÃO DE FITTING
   TF1 *fitfunction = new TF1("fitting function", "[b]+[a]*x");
   results->Fit("fitting function", "S");
   cout << "chi square/ndf = " << fitfunction->GetChisquare()/fitfunction->GetNDF() << endl;
-
+  //CALCULO DOS RESÍDUOS DOS PONTOS EM RELACAO À CURVA DE FITTING
   vector<double> sigma;
   for(int i = 0; i < n;i++)
   {
     sigma.push_back(FileShit[1][i]-fitfunction->Eval(FileShit[0][i]));
   }
+  //DEFINIÇÃO DO TGRAPH COM OS RESÍDUOS
   TGraphErrors *resultsSigma = SetGraphStuff(n,FileShit[0],sigma.data(),NULL,FileShit[3],"",xtitulo ,"#delta(s^{-1})",0.08);
   pair<double, double> extremes = GetExtremes(FileShit[0],n);
   TF1 *fNull = new TF1("null func", "0",extremes.first,extremes.second);
@@ -113,13 +115,15 @@ void DrawEverything(TGraphErrors* graph,TGraphErrors* graph2,TF1*func,string nam
   c1->cd();
   P->Draw();
   PRes->Draw();
+  //DESENHAR GRÁFICO DE FIT
   P->cd();
   graph->Draw("AP");
+  //DESENHAR GRAFICO DOS RESIDUOS
   PRes->cd();
   graph2->Draw("AP");
   func->Draw("SAME");
 
-
+  //GUARDAR A IMAGEM NA PASTA DAS IMAGENS
   c1->SaveAs(("imagens/"+name + ".png").c_str());
   c1->Update();
   gPad->WaitPrimitive("ggg");
@@ -127,7 +131,7 @@ void DrawEverything(TGraphErrors* graph,TGraphErrors* graph2,TF1*func,string nam
 }
 
 
-
+//DEFINICAO DE TITULOS E DE NOMES DOS EIXOS
 TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string title,string xtitle,string ytitle,double tSize)
 {
   TGraphErrors *results = new TGraphErrors(n,x,y,ex,ey);
@@ -150,7 +154,7 @@ TGraphErrors* SetGraphStuff(int n, double*x ,double*y,double*ex,double*ey,string
   return results;
 
 }
-
+//LEITURA DO FICHEIRO PARA SACAR OS VALORES
 vector<double *> ReadFileGeneral(string a,int &n)
 {
   FCtools reader;
